@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Aadhaar QR Scanner</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="name_tag"><b> Name:\u0020 </b></string>
+    <string name="address_tag"><u><b>Address:\u0020 </b></u></string>
+    <string name="gender_tag"><b>Gender:\u0020 </b></string>
+    <string name="aadhaar_tag"><b>UID:\u0020 </b></string>
+    <string name="dob_tag"><b>DOB: \u0020</b></string>
+    <string name="permission_denied">Could not Launch Scanner.Permission Denied</string>
+    <string name="QRReadErrorMessage">Not a valid Aadhaar QR Code!</string>
+    <string name="verifyProgress">Verifying...</string>
+    <string name="verifyResultPositive">Verified</string>
+    <string name="verifyResultNegative">Not Verified</string>
+    <string name="readingErrorMessage">\nNot a Aadhaar QR code\nTry again</string>
+    <string name="flashOnMessage">Turn Flash On</string>
+    <string name="flashOffMessage">Turn Flash Off</string>
+</resources>

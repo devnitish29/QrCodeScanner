@@ -1,0 +1,14 @@
+syntax = "proto3";
+option java_outer_classname = "QRProtos";
+option java_package = "com.example.zbarbarcodescanner";
+message QRAadhaar {
+    string name = 1;
+    string uid=2;
+    string gender =3;
+    string mobile=4;
+    string dob=5;
+    string address=6;
+    string image=7;
+    string digSign=8;
+    string email=9;
+}
