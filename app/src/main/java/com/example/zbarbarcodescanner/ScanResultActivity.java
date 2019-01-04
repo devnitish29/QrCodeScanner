@@ -201,7 +201,7 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
     private Pair<Integer,String> getData(byte []uidBytes, int start) {
         ByteArrayOutputStream out=new ByteArrayOutputStream();
         int i=start;
-        while(uidBytes[i]!=-128) {
+        while(uidBytes[i]!=-1) {
             out.write(uidBytes[i++]);
         }
         try {

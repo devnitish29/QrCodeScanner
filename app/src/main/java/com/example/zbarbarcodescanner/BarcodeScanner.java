@@ -11,7 +11,6 @@ import android.os.Vibrator;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
@@ -31,8 +30,9 @@ import java.nio.charset.Charset;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
-public class BarcodeScanner extends AppCompatActivity {
+import static android.app.Activity.RESULT_OK;
 
+public class BarcodeScanner extends AppCompatActivity {
     private Camera mCamera;
     private Handler autoFocusHandler;
 
