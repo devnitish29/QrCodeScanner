@@ -319,17 +319,16 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
     @Override
     public void onClick(View view) {
         int id=view.getId();
-        switch (id) {
-            case R.id.scanRepeatButton:
-                onBackPressed();
-                break;
-            case R.id.showExtraButton:
-                showAlertDialog("Extra data",
-                                "Version: "+aadhaarQR.getVersion()+"\n\n"+
-                                "Mobile: "+aadhaarQR.getMobile()+"\n\n"+
-                                "Email: "+aadhaarQR.getEmail()+"\n\n"+
-                                "DigSign: "+aadhaarQR.getDigSign());
-                break;
+        if(id==R.id.scanRepeatButton) {
+            onBackPressed();
+
+        }
+        else if(id==R.id.showExtraButton) {
+            showAlertDialog("Extra data",
+                    "Version: "+aadhaarQR.getVersion()+"\n\n"+
+                            "Mobile: "+aadhaarQR.getMobile()+"\n\n"+
+                            "Email: "+aadhaarQR.getEmail()+"\n\n"+
+                            "DigSign: "+aadhaarQR.getDigSign());
         }
     }
 
