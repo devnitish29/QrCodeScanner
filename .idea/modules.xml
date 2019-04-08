@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/ZbarBarcodeScanner.iml" filepath="$PROJECT_DIR$/ZbarBarcodeScanner.iml" />
-      <module fileurl="file://$PROJECT_DIR$/openjpeg/openjpeg.iml" filepath="$PROJECT_DIR$/openjpeg/openjpeg.iml" />
+      <module fileurl="file://$PROJECT_DIR$/openJpeg/openJpeg.iml" filepath="$PROJECT_DIR$/openJpeg/openJpeg.iml" />
       <module fileurl="file://$PROJECT_DIR$/scanner/scanner.iml" filepath="$PROJECT_DIR$/scanner/scanner.iml" />
     </modules>
   </component>

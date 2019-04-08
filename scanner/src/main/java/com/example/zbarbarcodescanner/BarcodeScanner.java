@@ -9,9 +9,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.support.annotation.Nullable;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -23,11 +26,13 @@ import net.sourceforge.zbar.ImageScanner;
 import net.sourceforge.zbar.Symbol;
 import net.sourceforge.zbar.SymbolSet;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.zip.DataFormatException;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 
 import static android.app.Activity.RESULT_OK;
@@ -59,6 +64,8 @@ public class BarcodeScanner extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.barcode_scanner);
+        ActionBar actionBar=getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
         initControls();
     }
 
@@ -90,13 +97,6 @@ public class BarcodeScanner extends AppCompatActivity {
                 else {
                     turnFlashOff();
                 }
-//                if (barcodeScanned) {
-//                    barcodeScanned = false;
-//                    mCamera.setPreviewCallback(previewCb);
-//                    mCamera.startPreview();
-//                    previewing = true;
-//                    mCamera.autoFocus(autoFocusCB);
-//                }
             }
         });
     }
@@ -189,6 +189,7 @@ public class BarcodeScanner extends AppCompatActivity {
                         isDataValid=true;
                         boolean isXML=false;
                         byte []message=sym.getDataBytes();
+
                         String res=new String(message,Charset.forName("UTF-8"));
                         String xmlHeader=res.substring(0,4);
                         byte []uiData=null;
@@ -200,20 +201,13 @@ public class BarcodeScanner extends AppCompatActivity {
                             try {
                                 uiData=new BigInteger(res).toByteArray();
                                 uiData=decompress(uiData);
+                                //showAlertDialog(new BigInteger(res).toString());
+                                if(uiData==null) {
+                                    isDataValid=false;
+                                }
                             }
                             catch(NumberFormatException e) {
                                 isDataValid=false;
-                                showAlertDialog("");
-                            }
-                            catch(IOException e) {
-                                e.printStackTrace();
-                                isDataValid=false;
-                                showAlertDialog(e.getMessage());
-                            }
-                            catch(DataFormatException e) {
-                                e.printStackTrace();
-                                isDataValid=false;
-                                showAlertDialog(e.getMessage());
                             }
                         }
                         if (!barcodeScanned && isDataValid) {
@@ -247,7 +241,6 @@ public class BarcodeScanner extends AppCompatActivity {
     }
 
     private void showAlertDialog(String alertMessage) {
-
         new AlertDialog.Builder(this)
                 .setTitle(getResources().getString(R.string.app_name))
                 .setCancelable(false)
@@ -260,17 +253,24 @@ public class BarcodeScanner extends AppCompatActivity {
                 .show();
     }
 
-    private byte[] decompress(byte[] data) throws IOException, DataFormatException {
-        Inflater inflater = new Inflater();
-        inflater.setInput(data);
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        byte[] buffer = new byte[2048];
-        while (!inflater.finished()) {
-            int count = inflater.inflate(buffer);
-            outputStream.write(buffer, 0, count);
+    private byte[] decompress(byte[] data) {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try {
+            ByteArrayInputStream in = new ByteArrayInputStream(data);
+            GZIPInputStream gis = new GZIPInputStream(in);
+            byte[] buffer = new byte[1024];
+            int len;
+            while((len = gis.read(buffer)) != -1){
+                os.write(buffer, 0, len);
+            }
+            os.close();
+            gis.close();
         }
-        outputStream.close();
-        return outputStream.toByteArray();
+        catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return os.toByteArray();
     }
 
     @Override
@@ -307,5 +307,14 @@ public class BarcodeScanner extends AppCompatActivity {
         catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId()==android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

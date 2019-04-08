@@ -132,7 +132,7 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
                             aadhaarQR.setDigSign(parser.getAttributeValue(null,"s"));
                             aadhaarQR.setMobile(parser.getAttributeValue(null,"m"));
                             if("QPDB".equals(eltName))
-                            aadhaarQR.setImage(parser.getAttributeValue(null,"i"));
+                                aadhaarQR.setImage(parser.getAttributeValue(null,"i"));
                         }
                         break;
                 }
@@ -152,38 +152,74 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
         aadhaarQR.setDigSign(Base64.encodeToString(getDataReverse(uidBytes,end,256),Base64.DEFAULT));
         end-=256;
 
-        Pair<Integer,String> temp=getData(uidBytes,1);
-        aadhaarQR.setVersion(temp.second);
+        Pair<Integer,String> temp=getData(uidBytes,2);
+        aadhaarQR.setUid("XXXX XXXX "+temp.second.substring(0,4));
 
         temp=getData(uidBytes,temp.first);
         aadhaarQR.setName(temp.second);
 
         temp=getData(uidBytes,temp.first);
-        aadhaarQR.setUid("XXXX XXXX "+temp.second.substring(0,4));
+        aadhaarQR.setDob(temp.second);
 
         temp=getData(uidBytes,temp.first);
         aadhaarQR.setGender(temp.second);
 
-        temp=getData(uidBytes,temp.first);
-        aadhaarQR.setDob(getDob(temp.second));
+        String address[]=new String[11];
 
         temp=getData(uidBytes,temp.first);
-        aadhaarQR.setAddress(temp.second);
+        address[0]=temp.second;
+
+        temp=getData(uidBytes,temp.first);
+        address[1]=temp.second;
+
+        temp=getData(uidBytes,temp.first);
+        address[2]=temp.second;
+
+        temp=getData(uidBytes,temp.first);
+        address[3]=temp.second;
+
+        temp=getData(uidBytes,temp.first);
+        address[4]=temp.second;
+
+        temp=getData(uidBytes,temp.first);
+        address[5]=temp.second;
+
+        temp=getData(uidBytes,temp.first);
+        address[6]=temp.second;
+
+        temp=getData(uidBytes,temp.first);
+        address[7]=temp.second;
+
+        temp=getData(uidBytes,temp.first);
+        address[8]=temp.second;
+
+        temp=getData(uidBytes,temp.first);
+        address[9]=temp.second;
+
+        temp=getData(uidBytes,temp.first);
+        address[10]=temp.second;
+
+        StringBuilder str=new StringBuilder();
+        for(String part:address) {
+            str.append(part+" ");
+        }
+
+        aadhaarQR.setAddress(str.toString());
 
         byte flag=uidBytes[0];
 
-        switch (flag) {
-            case 0:
+        switch (new String(new byte[] {flag},CHARSET).charAt(0)) {
+            case '0':
                 break;
-            case 1:
+            case '1':
                 aadhaarQR.setMobile(getHexStringFromBytes(getDataReverse(uidBytes,end,32)));
                 end-=32;
                 break;
-            case 2:
+            case '2':
                 aadhaarQR.setEmail(getHexStringFromBytes(getDataReverse(uidBytes,end,32)));
                 end-=32;
                 break;
-            case 3:
+            case '3':
                 aadhaarQR.setEmail(getHexStringFromBytes(getDataReverse(uidBytes,end,32)));
                 end-=32;
                 aadhaarQR.setMobile(getHexStringFromBytes(getDataReverse(uidBytes,end,32)));
@@ -275,7 +311,7 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
                 break;
         }
         uidView.setText(aadhaarQR.getUid());
-        if(aadhaarQR.getImage()!=null) {
+        if(aadhaarQR.getImage()!=null && aadhaarQR.getImage().length()!=0) {
             decodeJp2PNG(aadhaarQR.getImage());
         }
         else {
@@ -298,10 +334,6 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
                     }
                 })
                 .show();
-    }
-
-    private String getDob(String dob) {
-        return dob.substring(0,2)+"-"+dob.substring(2,4)+"-"+dob.substring(4);
     }
 
     private String getHexStringFromBytes(byte []data) {

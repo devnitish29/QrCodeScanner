@@ -1,2 +1,2 @@
 
-include ':scanner', ':openjpeg'
+include ':scanner',':openJpeg'
