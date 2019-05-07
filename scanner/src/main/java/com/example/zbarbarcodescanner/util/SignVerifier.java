@@ -1,6 +1,9 @@
 package com.example.zbarbarcodescanner.util;
 import android.content.Context;
+import android.support.v4.util.Pair;
+import android.util.Log;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,15 +21,20 @@ import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import org.bouncycastle.x509.X509CertificatePair;
+
 
 public class SignVerifier {
 
-    public boolean verifySignature(byte[] inputData, byte[] signature, PublicKey publicKey){
+    public Pair<String,Boolean> verifySignature(byte[] inputData, byte[] signature, PublicKey publicKey,int recur){
         try {
             Signature publicSignature = Signature.getInstance("SHA256withRSA");
             publicSignature.initVerify(publicKey);
-            publicSignature.update(getSHA(inputData));
-            return publicSignature.verify(signature);
+            String shaDigest=getSHARec(new String(inputData),recur);
+            publicSignature.update(getBytefromHex(shaDigest));
+            return new Pair<>(shaDigest,publicSignature.verify(signature));
         }
         catch(InvalidKeyException e) {
             e.printStackTrace();
@@ -37,7 +45,7 @@ public class SignVerifier {
         catch(NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-        return false;
+        return new Pair<>("",false);
     }
     public PublicKey getPublicKey(Context context) {
         try {
@@ -79,49 +87,90 @@ public class SignVerifier {
     }
     public PublicKey getPublicKey(String filename, char[] password,Context context) {
         try {
-            KeyStore pkcs12KeyStore = KeyStore.getInstance("PKCS12");
             InputStream fis = context.getAssets().open(filename);
-            pkcs12KeyStore.load(fis, password);
+            CertificateFactory f = CertificateFactory.getInstance("X.509");
+            X509Certificate certificate = (X509Certificate)f.generateCertificate(fis);
+
+            PublicKey pk = certificate.getPublicKey();
+//            KeyStore pkcs12KeyStore = KeyStore.getInstance("PKCS12");
+//            InputStream fis = context.getAssets().open(filename);
+//            pkcs12KeyStore.load(fis, password);
+//            fis.close();
+//            KeyStore.ProtectionParameter param = new KeyStore.PasswordProtection(password);
+//            KeyStore.Entry entry = pkcs12KeyStore.getEntry("owlstead", param);
+//            if (!(entry instanceof KeyStore.PrivateKeyEntry)) {
+//                throw new KeyStoreException("That's not a private key!");
+//            }
+//            KeyStore.PrivateKeyEntry privKeyEntry = (KeyStore.PrivateKeyEntry) entry;
+//            PublicKey publicKey = privKeyEntry.getCertificate().getPublicKey();
             fis.close();
-            KeyStore.ProtectionParameter param = new KeyStore.PasswordProtection(password);
-            KeyStore.Entry entry = pkcs12KeyStore.getEntry("owlstead", param);
-            if (!(entry instanceof KeyStore.PrivateKeyEntry)) {
-                throw new KeyStoreException("That's not a private key!");
-            }
-            KeyStore.PrivateKeyEntry privKeyEntry = (KeyStore.PrivateKeyEntry) entry;
-            PublicKey publicKey = privKeyEntry.getCertificate().getPublicKey();
-            fis.close();
-            return publicKey;
+            return pk;
         }
-        catch(KeyStoreException e) {
-            e.printStackTrace();
-        }
+
         catch(IOException e) {
-            e.printStackTrace();
-        }
-        catch(NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
         catch(CertificateException e) {
             e.printStackTrace();
         }
-        catch(UnrecoverableEntryException e) {
-            e.printStackTrace();
-        }
+//        catch(UnrecoverableEntryException e) {
+//            e.printStackTrace();
+//        }
+//        catch(KeyStoreException e) {
+//                e.printStackTrace();
+//        }
+//        catch(NoSuchAlgorithmException e) {
+//            e.printStackTrace();
+//        }
         return null;
     }
-    private byte[] getSHA(byte []input) {
+    private byte[] getSHA(byte []input,int recur) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-
-            // digest() method called
-            // to calculate message digest of an input
-            // and return array of byte
-            return md.digest(input);
+            for(int i=0;i<=recur;++i) {
+                input=md.digest(input);
+            }
         }
         catch(NoSuchAlgorithmException e) {
             e.printStackTrace();
+            return null;
         }
-        return null;
+        return input;
+    }
+
+    private String getSHARec(String input,int recur) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            for(int i=0;i<recur;++i) {
+                input=getHexStringFromBytes(md.digest(input.getBytes()));
+            }
+        }
+        catch(NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return input;
+    }
+    public static String getHexStringFromBytes(byte []data) {
+        char []hexCharset="0123456789abcdef".toCharArray();
+        char []hexString=new char[2*data.length];
+        int temp;
+        for(int i=0;i<data.length;++i) {
+            temp=data[i] & 0xff;
+            hexString[2*i]=hexCharset[temp>>4];
+            hexString[2*i+1]=hexCharset[temp & 0x0f];
+        }
+        return new String(hexString);
+    }
+    private byte []getBytefromHex(String hexString) {
+        String hexCharset="0123456789abcdef";
+        byte []data=new byte[hexString.length()/2];
+        int j,k;
+        for(int i=0;i<hexString.length();i+=2) {
+           j= hexCharset.indexOf(hexString.charAt(i));
+           k=hexCharset.indexOf(hexString.charAt(i+1));
+           data[i/2]=(byte)((j<<4)^k);
+        }
+        return data;
     }
 }

@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.zbarbarcodescanner"
-        minSdkVersion 19
+        minSdkVersion 23
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -32,10 +32,18 @@ android {
     }
 }
 
+
+
 dependencies {
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support:support-v4:28.0.0'
     implementation 'me.dm7.barcodescanner:zbar:1.8.2'
-    //implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'xmlpull:xmlpull:1.1.3.1'
+    implementation 'org.bouncycastle:bcprov-jdk16:1.45'
+    implementation 'com.android.support:design:28.0.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.1.0'
+    implementation 'com.squareup.retrofit2:converter-scalars:2.1.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.4.1'
+    ////implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation project(":openJpeg")
 }

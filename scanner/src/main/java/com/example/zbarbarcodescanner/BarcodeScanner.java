@@ -31,11 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
-import java.util.zip.DataFormatException;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.Inflater;
-
-import static android.app.Activity.RESULT_OK;
 
 public class BarcodeScanner extends AppCompatActivity {
     private Camera mCamera;
@@ -118,6 +114,7 @@ public class BarcodeScanner extends AppCompatActivity {
             mCamera.startPreview();
             isFlashOn=true;
             scanButton.setText(getString(R.string.flashOffMessage));
+            scanButton.setBackgroundColor(getResources().getColor(R.color.btnColor));
         }
         else {
             Toast.makeText(this,"Can't turn on Flash",Toast.LENGTH_LONG).show();
@@ -131,6 +128,7 @@ public class BarcodeScanner extends AppCompatActivity {
             mCamera.setParameters(params);
             isFlashOn=false;
             scanButton.setText(getString(R.string.flashOnMessage));
+            scanButton.setBackgroundColor(getResources().getColor(R.color.colorAccent));
         }
     }
 
@@ -200,6 +198,9 @@ public class BarcodeScanner extends AppCompatActivity {
                         else {
                             try {
                                 uiData=new BigInteger(res).toByteArray();
+                                String data_=new BigInteger(res).toString();
+                                Log.d("DATA",data_+" "+data_.length());
+                                Log.d("Size",uiData.length+" "+res.length());
                                 uiData=decompress(uiData);
                                 //showAlertDialog(new BigInteger(res).toString());
                                 if(uiData==null) {
@@ -207,6 +208,7 @@ public class BarcodeScanner extends AppCompatActivity {
                                 }
                             }
                             catch(NumberFormatException e) {
+
                                 isDataValid=false;
                             }
                         }

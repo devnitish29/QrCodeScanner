@@ -11,9 +11,12 @@
     <string name="permission_denied">Could not Launch Scanner.Permission Denied</string>
     <string name="QRReadErrorMessage">Not a valid Aadhaar QR Code!</string>
     <string name="verifyProgress">Verifying...</string>
-    <string name="verifyResultPositive">Verified</string>
-    <string name="verifyResultNegative">Not Verified</string>
+    <string name="verifyResultPositive">Aadhaar Data Verified</string>
+    <string name="verifyResultNegative">Aadhaar Data Not Verified</string>
     <string name="readingErrorMessage">\nNot a Aadhaar QR code\nTry again</string>
-    <string name="flashOnMessage">Turn Flash On</string>
-    <string name="flashOffMessage">Turn Flash Off</string>
+    <string name="flashOnMessage"><b>Turn Flash On</b></string>
+    <string name="flashOffMessage"><b>Turn Flash Off</b></string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

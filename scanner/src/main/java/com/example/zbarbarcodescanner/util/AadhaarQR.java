@@ -1,6 +1,8 @@
-package com.example.zbarbarcodescanner;
+package com.example.zbarbarcodescanner.util;
 
-public class AadhaarQR {
+import java.io.Serializable;
+
+public class AadhaarQR implements Serializable{
     private String name;
     private String uid;
     private String gender;
@@ -91,4 +93,6 @@ public class AadhaarQR {
     public void setEmail(String email) {
         this.email = email;
     }
+
+
 }

@@ -1,56 +1,48 @@
 package com.example.zbarbarcodescanner;
 
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.support.v4.util.Pair;
-import android.support.v7.app.AlertDialog;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Base64;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.util.Xml;
+import android.view.MenuItem;
+import android.support.design.widget.TabLayout;
 
+import com.example.zbarbarcodescanner.util.AadhaarQR;
 import com.example.zbarbarcodescanner.util.SignVerifier;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.security.PublicKey;
 
-import org.openJpeg.OpenJPEGJavaDecoder;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
+import org.xmlpull.v1.XmlSerializer;
 
-public class ScanResultActivity extends AppCompatActivity implements View.OnClickListener {
+import static com.example.zbarbarcodescanner.util.SignVerifier.getHexStringFromBytes;
+
+
+public class ScanResultActivity extends AppCompatActivity  {
     private final static String SIGN_KEY="sign_key";
-
-    private TextView nameView;
-    private TextView dobView;
-    private TextView genderView;
-    private TextView addressView;
-    private TextView uidView;
-    private TextView verifyStatusView;
-    private Button scanRepeatButton;
-    private Button showExtraButton;
-    private ImageView profieImageView;
-    private ImageView digSignImageView;
-    private ProgressBar progressBar;
     private final Charset CHARSET=Charset.forName("ISO-8859-1");
     private boolean isVerified;
+    private String sha256;
     private AadhaarQR aadhaarQR=new AadhaarQR();
+    private String address[]=new String[11];
+    private boolean isXML;
+    private ViewPager viewPager;
+    private TabLayout tabLayout;
+    private Toolbar toolbar;
 
 
     @Override
@@ -58,10 +50,15 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scan_result);
         initViews();
+        setSupportActionBar(toolbar);
+        ActionBar actionBar=getSupportActionBar();
+        actionBar.setElevation(0);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        tabLayout.setupWithViewPager(viewPager);
+
 
         if(savedInstanceState!=null && savedInstanceState.containsKey(SIGN_KEY)) {
             isVerified=savedInstanceState.getBoolean(SIGN_KEY);
-            showVerificationResult(isVerified);
         }
         else {
             isVerified=false;
@@ -69,7 +66,7 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
 
         Intent intent=getIntent();
         if(intent!=null) {
-            boolean isXML=intent.getBooleanExtra(BarcodeScanner.IS_XML,false);
+            isXML=intent.getBooleanExtra(BarcodeScanner.IS_XML,false);
             byte []uidBytes=intent.getByteArrayExtra(Intent.EXTRA_TEXT);
             if(isXML) {
                 parseXMLToObject(uidBytes);
@@ -77,7 +74,6 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
             else {
                 loadDataToObject(uidBytes);
             }
-            displayData();
             if(!isVerified) {
                 verifySignature(uidBytes);
             }
@@ -91,19 +87,9 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
     }
 
     private void initViews() {
-        nameView=findViewById(R.id.textViewName);
-        dobView=findViewById(R.id.textViewDob);
-        genderView= findViewById(R.id.textViewGender);
-        addressView= findViewById(R.id.textViewAddress);
-        uidView= findViewById(R.id.textViewUid);
-        verifyStatusView=findViewById(R.id.verifyProgressView);
-        progressBar=findViewById(R.id.verifyProgress);
-        scanRepeatButton= findViewById(R.id.scanRepeatButton);
-        showExtraButton=findViewById(R.id.showExtraButton);
-        profieImageView=findViewById(R.id.profileImageView);
-        digSignImageView=findViewById(R.id.digSignImage);
-        scanRepeatButton.setOnClickListener(this);
-        showExtraButton.setOnClickListener(this);
+        viewPager=findViewById(R.id.pager);
+        tabLayout =findViewById(R.id.modeTabs);
+        toolbar=findViewById(R.id.toolbar);
     }
 
     private void parseXMLToObject(byte []uidBytes) {
@@ -153,7 +139,7 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
         end-=256;
 
         Pair<Integer,String> temp=getData(uidBytes,2);
-        aadhaarQR.setUid("XXXX XXXX "+temp.second.substring(0,4));
+        aadhaarQR.setUid(temp.second);
 
         temp=getData(uidBytes,temp.first);
         aadhaarQR.setName(temp.second);
@@ -163,8 +149,6 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
 
         temp=getData(uidBytes,temp.first);
         aadhaarQR.setGender(temp.second);
-
-        String address[]=new String[11];
 
         temp=getData(uidBytes,temp.first);
         address[0]=temp.second;
@@ -199,12 +183,15 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
         temp=getData(uidBytes,temp.first);
         address[10]=temp.second;
 
-        StringBuilder str=new StringBuilder();
-        for(String part:address) {
-            str.append(part+" ");
-        }
+//        StringBuilder str=new StringBuilder();
+//
+//        for(String part:address) {
+//            str.append(part+" ");
+//        }
+        String add=address[0]+" "+address[3]+" "+address[8]+" "+address[4]+" "+address[2]+" "+address[10]+" "+address[6]+" "+address[9]+" "+address[1]+" "+
+                address[7]+"-"+address[5]+" ";
 
-        aadhaarQR.setAddress(str.toString());
+        aadhaarQR.setAddress(add);
 
         byte flag=uidBytes[0];
 
@@ -212,17 +199,17 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
             case '0':
                 break;
             case '1':
-                aadhaarQR.setMobile(getHexStringFromBytes(getDataReverse(uidBytes,end,32)));
+                aadhaarQR.setEmail(getHexStringFromBytes(getDataReverse(uidBytes,end,32)));
                 end-=32;
                 break;
             case '2':
-                aadhaarQR.setEmail(getHexStringFromBytes(getDataReverse(uidBytes,end,32)));
+                aadhaarQR.setMobile(getHexStringFromBytes(getDataReverse(uidBytes,end,32)));
                 end-=32;
                 break;
             case '3':
-                aadhaarQR.setEmail(getHexStringFromBytes(getDataReverse(uidBytes,end,32)));
-                end-=32;
                 aadhaarQR.setMobile(getHexStringFromBytes(getDataReverse(uidBytes,end,32)));
+                end-=32;
+                aadhaarQR.setEmail(getHexStringFromBytes(getDataReverse(uidBytes,end,32)));
                 end-=32;
                 break;
         }
@@ -232,6 +219,82 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
     private void verifySignature(byte []uidData) {
         byte []sign=Base64.decode(aadhaarQR.getDigSign(),Base64.DEFAULT);
         new VerifyAsyncTask().execute(uidData,sign);
+    }
+    private String getXmlOutput(String []address,AadhaarQR aadhaarQR) {
+        StringWriter stringWriter=new StringWriter();
+        XmlSerializer serializer= Xml.newSerializer();
+        try {
+            serializer.setOutput(stringWriter);
+            serializer.startDocument("UTF-8",true);
+            serializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
+
+            serializer.startTag("","OfflinePaperlessKyc");
+            serializer.attribute("","referenceId",aadhaarQR.getUid());
+
+            serializer.startTag("","UidData");
+
+            serializer.startTag("","Poi");
+            serializer.attribute("","dob",aadhaarQR.getDob());
+            serializer.attribute("","e",aadhaarQR.getEmail());
+            serializer.attribute("","gender",aadhaarQR.getGender());
+            serializer.attribute("","m",aadhaarQR.getMobile());
+            serializer.attribute("","name",aadhaarQR.getName());
+            serializer.endTag("","Poi");
+
+            serializer.startTag("","Poa");
+            serializer.attribute("","country","India");
+            serializer.attribute("","dist",address[1]);
+            serializer.attribute("","house",address[3]);
+            serializer.attribute("","loc",address[4]);
+            serializer.attribute("","pc",address[5]);
+            serializer.attribute("","po",address[6]);
+            serializer.attribute("","state",address[7]);
+            serializer.attribute("","street",address[8]);
+            serializer.attribute("","subdist",address[9]);
+            serializer.attribute("","vtc",address[10]);
+            serializer.endTag("","Poa");
+
+            serializer.startTag("","Pht");
+            serializer.text(aadhaarQR.getImage());
+            serializer.endTag("","Pht");
+            serializer.endTag("","UidData");
+
+            serializer.startTag("","Signature");
+            serializer.startTag("","SignedInfo");
+            serializer.startTag("","CanonicalizationMethod");
+            serializer.attribute("","Algorithm","http://www.w3.org/TR/2001/REC-xml-c14n-20010315");
+            serializer.endTag("","CanonicalizationMethod");
+            serializer.startTag("","SignatureMethod");
+            serializer.attribute("","Algorithm","http://www.w3.org/2000/09/xmldsig#rsa-sha1");
+            serializer.endTag("","SignatureMethod");
+            serializer.startTag("","Reference");
+            serializer.attribute("","URI","");
+            serializer.startTag("","Transforms");
+            serializer.startTag("","Transform");
+            serializer.attribute("","Algorithm","http://www.w3.org/2000/09/xmldsig#enveloped-signature");
+            serializer.endTag("","Transform");
+            serializer.endTag("","Transforms");
+            serializer.startTag("","DigestMethod");
+            serializer.attribute("","Algorithm","http://www.w3.org/2001/04/xmlenc#sha256");
+            serializer.endTag("","DigestMethod");
+            serializer.startTag("","DigestValue");
+            serializer.text(sha256);
+            serializer.endTag("","DigestValue");
+            serializer.endTag("","Reference");
+            serializer.endTag("","SignedInfo");
+            serializer.startTag("","SignatureValue");
+            serializer.text(aadhaarQR.getDigSign());
+            serializer.endTag("","SignatureValue");
+            serializer.endTag("","Signature");
+            serializer.endTag("","OfflinePaperlessKyc");
+            serializer.endDocument();
+            stringWriter.close();
+        }
+        catch(IOException e) {
+
+        }
+        return stringWriter.toString();
+
     }
 
     private Pair<Integer,String> getData(byte []uidBytes, int start) {
@@ -262,107 +325,7 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
         return out.toByteArray();
     }
 
-    private void decodeJp2PNG(String imageString) {
-        byte []imageBytes=Base64.decode(imageString,Base64.DEFAULT);
-        try {
-            FileOutputStream fo=this.openFileOutput("temp.jp2", Context.MODE_PRIVATE);
-            fo.write(imageBytes);
-            fo.close();
-        }
-        catch(FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        catch(IOException e) {
-            e.printStackTrace();
-        }
-        OpenJPEGJavaDecoder decoder = new OpenJPEGJavaDecoder();
-        String[] params2 = new String[4];
-        params2[0] = "-i";
-        String fileDir=this.getFilesDir().getPath();
-        params2[1] = fileDir+"/temp.jp2";// path to jp2
-        params2[2] = "-o";
-        params2[3] = fileDir+"/temp.png"; // path to png
-        decoder.decodeJ2KtoImage(params2);
-        try {
-            FileInputStream fin=this.openFileInput("temp.png");
-            byte []buffer=new byte[fin.available()];
-            fin.read(buffer);
-            Bitmap bitmap= BitmapFactory.decodeByteArray(buffer,0,buffer.length);
-            profieImageView.setImageBitmap(bitmap);
-        }
-        catch(FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        catch(IOException e) {
-            e.printStackTrace();
-        }
-    }
 
-    private void displayData() {
-        nameView.setText(aadhaarQR.getName());
-        dobView.setText(aadhaarQR.getDob());
-        addressView.setText(aadhaarQR.getAddress());
-        switch (aadhaarQR.getGender()) {
-            case "M":
-                genderView.setText("Male");
-                break;
-            case "F":
-                genderView.setText("Female");
-                break;
-        }
-        uidView.setText(aadhaarQR.getUid());
-        if(aadhaarQR.getImage()!=null && aadhaarQR.getImage().length()!=0) {
-            decodeJp2PNG(aadhaarQR.getImage());
-        }
-        else {
-            TextView nameTitleView =findViewById(R.id.textViewNameTag);
-            nameTitleView.setPadding(0,80,0,0);
-            nameView.setPadding(0,80,0,0);
-            profieImageView.setVisibility(View.GONE);
-        }
-    }
-
-
-    private void showAlertDialog(String title,String message) {
-        new AlertDialog.Builder(this)
-                .setTitle(title)
-                .setCancelable(false)
-                .setMessage(message)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
-                })
-                .show();
-    }
-
-    private String getHexStringFromBytes(byte []data) {
-        char []hexCharset="0123456789abcdef".toCharArray();
-        char []hexString=new char[2*data.length];
-        int temp;
-        for(int i=0;i<data.length;++i) {
-            temp=data[i] & 0xff;
-            hexString[2*i]=hexCharset[temp>>4];
-            hexString[2*i+1]=hexCharset[temp & 0x0f];
-        }
-        return new String(hexString);
-    }
-
-    @Override
-    public void onClick(View view) {
-        int id=view.getId();
-        if(id==R.id.scanRepeatButton) {
-            onBackPressed();
-
-        }
-        else if(id==R.id.showExtraButton) {
-            showAlertDialog("Extra data",
-                    "Version: "+aadhaarQR.getVersion()+"\n\n"+
-                            "Mobile: "+aadhaarQR.getMobile()+"\n\n"+
-                            "Email: "+aadhaarQR.getEmail()+"\n\n"+
-                            "DigSign: "+aadhaarQR.getDigSign());
-        }
-    }
 
     @Override
     public void onBackPressed() {
@@ -372,9 +335,20 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
         super.onBackPressed();
     }
 
-    class VerifyAsyncTask extends AsyncTask<byte[],Void,Boolean> {
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id=item.getItemId();
+        switch (id)  {
+            case android.R.id.home:
+                onBackPressed();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    class VerifyAsyncTask extends AsyncTask<byte[],Void,Pair<String,Boolean>> {
         @Override
-        protected Boolean doInBackground(byte[]... uidDataBytes) {
+        protected Pair<String,Boolean> doInBackground(byte[]... uidDataBytes) {
             byte[] uidData=uidDataBytes[0];
             byte[] sign=uidDataBytes[1];
             try {
@@ -383,45 +357,35 @@ public class ScanResultActivity extends AppCompatActivity implements View.OnClic
                 byte[] rawData=out.toByteArray();
                 out.close();
                 SignVerifier signVerifier=new SignVerifier();
-                PublicKey publicKey=signVerifier.getPublicKey("test_gen_self_signed.pkcs12","test".toCharArray(),getApplicationContext());
-                return signVerifier.verifySignature(rawData,sign,publicKey);
+                PublicKey publicKey=signVerifier.getPublicKey("okyc-publickey.cer","test".toCharArray(),getApplicationContext());
+                return signVerifier.verifySignature(rawData,sign,publicKey,aadhaarQR.getUid().charAt(3)-'0');
 
             }
             catch(IOException e) {
                 e.printStackTrace();
             }
-            return false;
+            return new Pair<>("",false);
         }
 
         @Override
         protected void onPreExecute() {
-            startSignatureVerification();
             super.onPreExecute();
         }
 
         @Override
-        protected void onPostExecute(Boolean isVerified) {
+        protected void onPostExecute(Pair<String,Boolean> isVerified) {
             super.onPostExecute(isVerified);
-            ScanResultActivity.this.isVerified=isVerified;
-            showVerificationResult(isVerified);
+            ScanResultActivity.this.isVerified=isVerified.second;
+            ScanResultActivity.this.sha256=isVerified.first;
+            String xmlContent="";
+            if(!isXML) {
+                xmlContent=getXmlOutput(address,aadhaarQR);
+            }
+            QrModeAdapter qrModeAdapter=new QrModeAdapter(getSupportFragmentManager(),aadhaarQR,xmlContent,ScanResultActivity.this.isVerified);
+            viewPager.setAdapter(qrModeAdapter);
         }
     }
 
-    private void showVerificationResult(Boolean isVerified) {
-        progressBar.setVisibility(View.GONE);
-        digSignImageView.setVisibility(View.VISIBLE);
-        if(isVerified) {
-            digSignImageView.setImageResource(R.drawable.valid);
-            verifyStatusView.setText(getString(R.string.verifyResultPositive));
-        }
-        else {
-            digSignImageView.setImageResource(R.drawable.invalid);
-            verifyStatusView.setText(getString(R.string.verifyResultNegative));
-        }
-    }
-    private void startSignatureVerification() {
-        verifyStatusView.setText(getString(R.string.verifyProgress));
-        progressBar.setVisibility(View.VISIBLE);
-        digSignImageView.setVisibility(View.GONE);
-    }
+
+
 }
