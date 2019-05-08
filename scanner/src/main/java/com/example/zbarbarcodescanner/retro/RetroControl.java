@@ -1,15 +1,6 @@
 package com.example.zbarbarcodescanner.retro;
 
-import android.util.Log;
 
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -46,37 +37,10 @@ public class RetroControl {
         }
     }
     private static OkHttpClient getHttpClient() {
-        TrustManager tm[] = new TrustManager[] {new X509TrustManager() {
-            @Override
-            public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-
-            }
-
-            @Override
-            public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-
-            }
-
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[1];
-            }
-        }};
-        SSLContext contextSSL;
-        try {
-            contextSSL = SSLContext.getInstance("TLS");
-            contextSSL.init(null, tm, null);
-            HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
-            interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-            return new OkHttpClient.Builder()
-                    .sslSocketFactory(contextSSL.getSocketFactory())
-                    .addInterceptor(interceptor)
-                    .build();
-        } catch (NoSuchAlgorithmException e) {
-            Log.e("TAG", e.getMessage(), e);
-        } catch (KeyManagementException e) {
-            Log.e("TAG", e.getMessage(), e);
-        }
-        return null;
+        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        return new OkHttpClient.Builder()
+                .addInterceptor(interceptor)
+                .build();
     }
 }
