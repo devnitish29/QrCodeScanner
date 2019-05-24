@@ -176,20 +176,26 @@ public class BarcodeScanner extends AppCompatActivity {
                 barcode.setData(data);
 
                 int result = scanner.scanImage(barcode);
+//                Log.e("NITISH", "onPreviewFrame: "+result);
                 if (result != 0) {
                     previewing=false;
                     SymbolSet syms = scanner.getResults();
                     Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+
                     if(v!=null) {
                         v.vibrate(100);
                     }
                     for (Symbol sym : syms) {
+                        Log.e("NITISH", "SymbolSet: "+sym.getData());
                         isDataValid=true;
                         boolean isXML=false;
                         byte []message=sym.getDataBytes();
 
                         String res=new String(message,Charset.forName("UTF-8"));
                         String xmlHeader=res.substring(0,4);
+                        Log.e("NITISH", "onPreviewFrame: res "+res);
+                        Log.e("NITISH", "onPreviewFrame: xmlHeader "+xmlHeader);
+
                         byte []uiData=null;
                         if(xmlHeader.equals("<QPD") || xmlHeader.equals("<QDB")) {
                             uiData=message;
